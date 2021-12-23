@@ -170,66 +170,14 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         
         bufferFiller(channel, bufferSize, circBufferSize, channelData);
         
+        spectralShit(channel, bufferSize, circBufferSize);
         //get most recent fftsize of samples and store them in a windowed buffer
             //if we can access the most recent (fftSize) num of samples from the circbuffer without having to wrap around to the end of the circbuffer
-        
-        if (writePosition - fftSize >= 0) //can this also just be if(writePosition > fftSize)?
-        {
-            for (int n = 0; n < fftSize; ++n)
-            {
-                //syntax if chunkOne is an Array not a Buffer <-- i think this will work better for windowing and the fft stuff
-                chunkOne[n] = circBuffer.getSample(channel, (writePosition - fftSize) + n);
-                /*chunkOne.setSample(channel, n, circBuffer.getSample(channel, (writePosition - fftSize) + n));
-                 */
-            }
-            
-        }
-        else
-        {
-            //find out how we need to break it up
-            int sampsAtEnd = fftSize - writePosition;
-            //create two for loops that fill up the buffer
-                //first the samps at the end of the circbuffer (before the wrap - as those are earliest)
-            
-            for (int n = 0; n < sampsAtEnd; n++)
-            {
-                chunkOne[n] = circBuffer.getSample(channel, (circBufferSize - sampsAtEnd) + n);
-                /*chunkOne.setSample(channel, n, circBuffer.getSample(channel, (circBufferSize - sampsAtEnd) + n));
-                */
-            }
-                //then the values at the beginning of the buffer, as these have come later
-            for (int n = 0; n < fftSize - sampsAtEnd; n++)
-            {
-                chunkOne[n + sampsAtEnd] = circBuffer.getSample(channel, n);
-                /*chunkOne.setSample(channel, n + sampsAtEnd, circBuffer.getSample(channel, n));
-                 */
-            }
-            //window the chunk
-            window.multiplyWithWindowingTable(chunkOne, fftSize);
-        }
-        //copy the windowed chunk into the fftArray
-        for (int x = 0; x < fftSize; ++x)
-        {
-            fftBuffer[x] = chunkOne[x];
-            //std::cout << fftBuffer[x] << std::endl;
-        }
-        //compute the fft on that buffer
-        forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
-        //computer the ifft on that buffer
-        //first half of the inverse are our reconstituted values
-        inverseFFT.performRealOnlyInverseTransform(fftBuffer);
-        for (int x = 0; x < 512; x ++) {
-            
-        }
-        
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             channelData[sample] = channelData[sample] * binAmps[0];
             //channelData[sample] = fftBuffer[sample] ;
         }
-        //cout << fftSizeStr << endl;
-        
-        
         
         
         //send samples out to output buffer
@@ -237,6 +185,7 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         //process(juce::dsp::ProcessContextReplacing<float>(block));
     }
 }
+
 void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData)
 {
     // Check to see if main buffer copies to circ buffer without needing to wrap...
@@ -257,6 +206,64 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
         //Copy remaining amount to beginning of delay buffer
         circBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEnd, numSamplesAtStart, 0.1f, 0.1f);
     }
+}
+
+void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize)
+{
+    if (writePosition - fftSize >= 0) //can this also just be if(writePosition > fftSize)?
+    {
+        for (int n = 0; n < fftSize; ++n)
+        {
+            //syntax if chunkOne is an Array not a Buffer <-- i think this will work better for windowing and the fft stuff
+            chunkOne[n] = circBuffer.getSample(channel, (writePosition - fftSize) + n);
+            /*chunkOne.setSample(channel, n, circBuffer.getSample(channel, (writePosition - fftSize) + n));
+             */
+        }
+        
+    }
+    else
+    {
+        //find out how we need to break it up
+        int sampsAtEnd = fftSize - writePosition;
+        //create two for loops that fill up the buffer
+            //first the samps at the end of the circbuffer (before the wrap - as those are earliest)
+        
+        for (int n = 0; n < sampsAtEnd; n++)
+        {
+            chunkOne[n] = circBuffer.getSample(channel, (circBufferSize - sampsAtEnd) + n);
+            /*chunkOne.setSample(channel, n, circBuffer.getSample(channel, (circBufferSize - sampsAtEnd) + n));
+            */
+        }
+            //then the values at the beginning of the buffer, as these have come later
+        for (int n = 0; n < fftSize - sampsAtEnd; n++)
+        {
+            chunkOne[n + sampsAtEnd] = circBuffer.getSample(channel, n);
+            /*chunkOne.setSample(channel, n + sampsAtEnd, circBuffer.getSample(channel, n));
+             */
+        }
+        //window the chunk
+        window.multiplyWithWindowingTable(chunkOne, fftSize);
+    }
+    //copy the windowed chunk into the fftArray
+    for (int x = 0; x < fftSize; ++x)
+    {
+        fftBuffer[x] = chunkOne[x];
+        //std::cout << fftBuffer[x] << std::endl;
+    }
+    //compute the fft on that buffer
+    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    //computer the ifft on that buffer
+    //first half of the inverse are our reconstituted values
+    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    for (int x = 0; x < 512; x ++) {
+        
+    }
+    
+    
+    //cout << fftSizeStr << endl;
+    
+    
+    
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const

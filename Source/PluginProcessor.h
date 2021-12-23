@@ -58,6 +58,7 @@ public:
 
 private:
     void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData);
+    void spectralShit(int channel, int bufferSize, int circBufferSize);
     juce::AudioBuffer<float> circBuffer;
     
     juce::AudioBuffer<float> chunkTwo;
