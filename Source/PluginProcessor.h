@@ -57,16 +57,17 @@ public:
     float binAmps[64];
 
 private:
-    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData);
-    void spectralShit(int channel, int bufferSize, int circBufferSize);
+    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
+    void spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize);
     juce::AudioBuffer<float> circBuffer;
-    
     juce::AudioBuffer<float> chunkTwo;
     
     int writePosition {0};
     juce::dsp::FFT forwardFFT;
     juce::dsp::FFT inverseFFT;
     int fftSize = 256;
+    int hopSize = fftSize / 2;
+    int hopCounter = 0;
     float chunkOne [256];
     float fftBuffer [512];
     

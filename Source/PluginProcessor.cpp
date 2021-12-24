@@ -100,6 +100,9 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     auto circBufferSize = 1024;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
     
+    //creates a buffer not sure if we need this yet...
+    auto chunkTwoSize = fftSize;
+    chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     
     //chunkOne.setSize(getTotalNumOutputChannels(), (int)fftSize);
     //chunkTwo.setSize(getTotalNumOutputChannels(), (int)fftSize);
@@ -147,46 +150,32 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     auto totalNumInputChannels  = getTotalNumInputChannels();
     auto totalNumOutputChannels = getTotalNumOutputChannels();
 
-    // In case we have more outputs than inputs, this code clears any output
-    // channels that didn't contain input data, (because these aren't
-    // guaranteed to be empty - they may contain garbage).
-    // This is here to avoid people getting screaming feedback
-    // when they first compile a plugin, but obviously you don't need to keep
-    // this code if your algorithm always overwrites all the output channels.
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-    
     auto bufferSize = buffer.getNumSamples();
     auto circBufferSize = circBuffer.getNumSamples();
-    // This is the place where you'd normally do the guts of your plugin's
-    // audio processing...
-    // Make sure to reset the state if your inner loop is processing
-    // the samples and the outer loop is handling the channels.
-    // Alternatively, you can process the samples with the channels
-    // interleaved by keeping the same state.
+    auto chunkTwoSize = chunkTwo.getNumSamples();
+    
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
+        //writes sample blocks into a circular buffer from The Audio Programmer Tutorial 15
+        bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer, chunkTwoSize);
+        //process the fft on an arbitrary block size (i.e. not necessarily process block size)
+        //spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize);
         
-        bufferFiller(channel, bufferSize, circBufferSize, channelData);
-        
-        spectralShit(channel, bufferSize, circBufferSize);
-        //get most recent fftsize of samples and store them in a windowed buffer
-            //if we can access the most recent (fftSize) num of samples from the circbuffer without having to wrap around to the end of the circbuffer
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             channelData[sample] = channelData[sample] * binAmps[0];
             //channelData[sample] = fftBuffer[sample] ;
         }
-        
-        
         //send samples out to output buffer
         juce::dsp::AudioBlock<float> block (buffer);
-        //process(juce::dsp::ProcessContextReplacing<float>(block));
+        
     }
 }
 
-void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData)
+void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize)
 {
     // Check to see if main buffer copies to circ buffer without needing to wrap...
     if (circBufferSize > bufferSize + writePosition)
@@ -206,11 +195,28 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
         //Copy remaining amount to beginning of delay buffer
         circBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEnd, numSamplesAtStart, 0.1f, 0.1f);
     }
+    //after we have added the newest block of samples to the circular buffer, we add this number of samples to our hop counter and check whether or not we have elapsed a hop size of samples
+    //if so we trigger an fft calculation
+    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
+    {
+        if(++hopCounter > hopSize)
+        {
+            
+            hopCounter = 0;
+            //DBG ("i triggered");
+            //spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize);
+        }
+        //DBG (hopCounter);
+    }
+    
 }
 
-void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize)
+void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize)
 {
+    //get most recent fftsize of samples and store them in a windowed buffer
+    //if we can access the most recent (fftSize) num of samples from the circbuffer without having to wrap around to the end of the circbuffer
     if (writePosition - fftSize >= 0) //can this also just be if(writePosition > fftSize)?
+    //if (chunkTwoSize > bufferSize + writePosition)
     {
         for (int n = 0; n < fftSize; ++n)
         {
