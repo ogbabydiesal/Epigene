@@ -59,6 +59,7 @@ public:
 private:
     void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
     void spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize);
+    void hopCounter(int channel, int bufferSize, int circBufferSize, int chunTwoSize);
     juce::AudioBuffer<float> circBuffer;
     juce::AudioBuffer<float> chunkTwo;
     
@@ -67,7 +68,7 @@ private:
     juce::dsp::FFT inverseFFT;
     int fftSize = 256;
     int hopSize = fftSize / 2;
-    int hopCounter = 0;
+    int hopCount = 0;
     float chunkOne [256];
     float fftBuffer [512];
     
