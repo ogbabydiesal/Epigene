@@ -104,6 +104,8 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     auto chunkTwoSize = fftSize;
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     
+    OwritePosition = hopSize;
+    OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
     //chunkOne.setSize(getTotalNumOutputChannels(), (int)fftSize);
     //chunkTwo.setSize(getTotalNumOutputChannels(), (int)fftSize);
     // Use this method as the place to do any pre-playback
@@ -178,44 +180,14 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize)
 {
     // Check to see if main buffer copies to circ buffer without needing to wrap...
-    if (circBufferSize > bufferSize + writePosition)
-    {
-        for (int x = 0; x < bufferSize; ++x) {
-            circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
-            hopCounter(channel, bufferSize, circBufferSize, chunkTwoSize);
-        }
-        
-    }
-    //if no
-    else
-    {
-        // Determines how much Space is left at the end of the circ buffer
-        auto numSamplesToEnd = circBufferSize - writePosition;
-        //copy that amount of contents to the end
-        for (int x = 0; x < numSamplesToEnd; ++x)
+    for (int x = 0; x < bufferSize; ++x) {
+        circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
+        //hopCounter(channel, bufferSize, circBufferSize, chunkTwoSize);
+        if (++writePosition >= circBufferSize)
         {
-            circBuffer.copyFromWithRamp(channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
-            hopCounter(channel, bufferSize, circBufferSize, chunkTwoSize);
+            writePosition = 0;
         }
-        
-        // calculate how much contents is remaining to copy
-        auto numSamplesAtStart = bufferSize - numSamplesToEnd;
-        //Copy remaining amount to beginning of delay buffer
-        for (int x = 0; x < numSamplesAtStart; ++x)
-        {
-            circBuffer.copyFromWithRamp(channel, 0, channelData + numSamplesToEnd, 1, 0.1f, 0.1f);
-            hopCounter(channel, bufferSize, circBufferSize, chunkTwoSize);
-        }
-        
     }
-    //after we have added the newest block of samples to the circular buffer, we add this number of samples to our hop counter and check whether or not we have elapsed a hop size of samples
-    //if so we trigger an fft calculation
-    for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
-    {
-        
-        
-    }
-    
 }
 
 void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circBufferSize, int chunkTwoSize)
@@ -223,16 +195,25 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
     if(++hopCount > hopSize)
     {
         hopCount = 0;
-        DBG ("i triggered");
-        spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize);
+        //DBG ("i triggered");
+        //spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize, OwritePosition, OcircBuffer);
+        
+        OwritePosition = (OwritePosition + hopSize) % bufferSize;
+        //DBG (writePosition);
     }
-    DBG (hopCount);
+    //DBG (hopCount);
+    //DBG (writePosition);
+    //DBG ("circbuffersize = " + std::to_string(circBufferSize));
 }
-void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize)
+void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer)
 {
     
     //get most recent fftsize of samples and store them in a windowed buffer
     //if we can access the most recent (fftSize) num of samples from the circbuffer without having to wrap around to the end of the circbuffer
+    for (int x = 0; x < fftSize; x++)
+    {
+        //chunkTwo.copyFromWithRamp(channel, 0, (circBuffer - fftSize)  , <#int numSamples#>, <#float startGain#>, <#float endGain#>)
+    }
     if (writePosition - fftSize >= 0) //can this also just be if(writePosition > fftSize)?
     //if (chunkTwoSize > bufferSize + writePosition)
     {
@@ -266,6 +247,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
              */
         }
         //window the chunk
+        
         window.multiplyWithWindowingTable(chunkOne, fftSize);
     }
     //copy the windowed chunk into the fftArray
@@ -282,12 +264,6 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < 512; x ++) {
         
     }
-    
-    
-    //cout << fftSizeStr << endl;
-    
-    
-    
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const
