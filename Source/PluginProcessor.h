@@ -58,8 +58,8 @@ public:
 
 private:
     void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
-    void spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer);
-    void hopCounter(int channel, int bufferSize, int circBufferSize, int chunTwoSize);
+    void spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer);
+    void hopCounter(int channel, int bufferSize, int circBufferSize);
     juce::AudioBuffer<float> circBuffer; //input circular buffer
     juce::AudioBuffer<float> OcircBuffer; //output circular buffer
     juce::AudioBuffer<float> chunkTwo; //FFT processing container
@@ -73,7 +73,7 @@ private:
     int hopSize = fftSize / 2;
     int hopCount = 0;
     float chunkOne [256];
-    float fftBuffer [512];
+    float fftBuffer [512]; //twice fftSize to store mirror image
     
     juce::String fftSizeStr = "";
     juce::dsp::WindowingFunction<float> window;

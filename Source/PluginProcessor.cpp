@@ -99,7 +99,7 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.numChannels = getTotalNumOutputChannels();
     auto circBufferSize = 1024;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
-    
+    float fftBuffer [512];
     //creates a buffer not sure if we need this yet...
     //auto chunkTwoSize = fftSize;
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
@@ -182,7 +182,7 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
     // Check to see if main buffer copies to circ buffer without needing to wrap...
     for (int x = 0; x < bufferSize; ++x) {
         circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
-        hopCounter(channel, bufferSize, circBufferSize, chunkTwoSize);
+        hopCounter(channel, bufferSize, circBufferSize);
         if (++writePosition >= circBufferSize)
         {
             writePosition = 0;
@@ -190,13 +190,13 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
     }
 }
 
-void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circBufferSize, int chunkTwoSize)
+void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circBufferSize)
 {
     if(++hopCount >= hopSize)
     {
         hopCount = 0;
         //DBG ("i triggered");
-        spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize, OwritePosition, OcircBuffer);
+        spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
         OwritePosition = (OwritePosition + hopSize) % bufferSize;
         //DBG (writePosition);
     }
@@ -204,32 +204,44 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
     //DBG (writePosition);
     //DBG ("circbuffersize = " + std::to_string(circBufferSize));
 }
-void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int chunkTwoSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer)
+void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer)
 {
     
-    //get most recent fftsize of samples and store them in a windowed buffer
-    //if we can access the most recent (fftSize) num of samples from the circbuffer without having to wrap around to the end of the circbuffer
+    //get most recent fftsize of samples using modulo indexing and store them in a buffer
     for (int x = 0; x < fftSize; x++)
     {
-        //chunkOne[x] = circBuffer.getSample(channel, (((writePosition - fftSize) + circBufferSize) % circBufferSize));
-        chunkOne[x] = circBuffer.getSample(channel, x);
+        chunkOne[x] = circBuffer.getSample(channel, (((writePosition + x - fftSize) + circBufferSize) % circBufferSize));
     }
+    //window the buffer
+    window.multiplyWithWindowingTable(chunkOne, fftSize);
     
-    //window.multiplyWithWindowingTable(chunkOne, fftSize);
-    
-    
-    //copy the windowed chunk into the fftArray
+    //store samples in a padded buffer before we take the fft
     for (int x = 0; x < fftSize; ++x)
     {
-        //DBG (chunkOne[x]);
-        //fftBuffer[x] = chunkOne[x];
-        
+        //fftBuffer is 2x the fftSize
+        fftBuffer[x] = chunkOne[x];
     }
     //compute the fft on that buffer
-    //forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    
+    //do spectral processing here
+    
     //computer the ifft on that buffer
     //first half of the inverse are our reconstituted values
-    //inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    
+    //unwrap and ADD this fftSize of samples into an output buffer
+    for (int x = 0; x < fftSize; ++x)
+    {
+        //unwrap into output buffer use some modulo stuff
+        OcircBuffer.setSample(channel, ++OwritePosition, fftBuffer[x]);
+        if (OwritePosition >= circBufferSize)//wrong start here tomorrow
+        {
+            OwritePosition = 0;
+        }
+        //increase Output Buffer write position by one hopsize (using modulo indexing)
+        OwritePosition = (OwritePosition + hopSize) % circBufferSize;
+    }
     
 }
 //==============================================================================
