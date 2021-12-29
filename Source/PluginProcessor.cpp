@@ -164,12 +164,13 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
-            channelData[sample] = channelData[sample] * binAmps[0];
+            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + bufferSize) % bufferSize));
+            OcircBuffer.clear(channel, (OreadPosition + bufferSize) % bufferSize, 1);
             //channelData[sample] = fftBuffer[sample] ;
         }
+        OreadPosition = (OreadPosition + bufferSize) % bufferSize;
         //send samples out to output buffer
-        juce::dsp::AudioBlock<float> block (buffer);
-        
+        //juce::dsp::AudioBlock<float> block (buffer);
     }
 }
 
@@ -191,13 +192,11 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
     if(++hopCount >= hopSize)
     {
         hopCount = 0;
-        
-        //DBG ("i triggered");
+        //start the spectral processing
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
-        //
-        //DBG (writePosition);
+        //after spectral processing increase output buffer write pointer one hop-size to pre
         OwritePosition = (OwritePosition + hopSize) % bufferSize;
-        DBG(OwritePosition);
+        //DBG(OwritePosition);
     }
     
 }
@@ -215,13 +214,13 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     //store samples in a padded buffer before we take the fft
     for (int x = 0; x < fftSize; ++x)
     {
-        //fftBuffer is 2x the fftSize
+        //fftBuffer is 2x the fftSize, so we really only fill half the fftBuffer with this for-loop
         fftBuffer[x] = chunkOne[x];
     }
-    //compute the fft on that buffer
+    //compute the fft of the time doamain signals and store in that same buffer
     forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
     
-    //do spectral processing here
+    //do processing in the frequency domain here
     
     //computer the ifft on that buffer
     //first half of the inverse are our reconstituted values
@@ -232,7 +231,6 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     {
         //unwrap into output buffer use some modulo stuff
         OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
-        
     }
     
 
