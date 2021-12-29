@@ -104,6 +104,7 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     OwritePosition = hopSize;
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
+    //DBG(OcircBuffer.getNumSamples());
     //chunkOne.setSize(getTotalNumOutputChannels(), (int)fftSize);
     //chunkTwo.setSize(getTotalNumOutputChannels(), (int)fftSize);
     // Use this method as the place to do any pre-playback
@@ -164,8 +165,8 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
-            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + bufferSize) % bufferSize));
-            OcircBuffer.clear(channel, (OreadPosition + bufferSize) % bufferSize, 1);
+            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % bufferSize));
+            OcircBuffer.clear(channel, (OreadPosition + sample) % bufferSize, 1);
             //channelData[sample] = fftBuffer[sample] ;
         }
         OreadPosition = (OreadPosition + bufferSize) % bufferSize;
@@ -230,7 +231,8 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < fftSize; ++x)
     {
         //unwrap into output buffer use some modulo stuff
-        OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
+        //OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
+        OcircBuffer.addSample(channel, (OwritePosition + x) % bufferSize, fftBuffer[x]);
     }
     
 
