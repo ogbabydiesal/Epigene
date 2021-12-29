@@ -99,11 +99,9 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.numChannels = getTotalNumOutputChannels();
     auto circBufferSize = 1024;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
-    float fftBuffer [512];
     //creates a buffer not sure if we need this yet...
     //auto chunkTwoSize = fftSize;
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
-    
     OwritePosition = hopSize;
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
     //chunkOne.setSize(getTotalNumOutputChannels(), (int)fftSize);
@@ -163,8 +161,6 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         auto* channelData = buffer.getWritePointer (channel);
         //writes sample blocks into a circular buffer from The Audio Programmer Tutorial 15
         bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer, chunkTwoSize);
-        //process the fft on an arbitrary block size (i.e. not necessarily process block size)
-        //spectralShit(channel, bufferSize, circBufferSize, chunkTwoSize);
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
@@ -195,14 +191,15 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
     if(++hopCount >= hopSize)
     {
         hopCount = 0;
+        
         //DBG ("i triggered");
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
-        OwritePosition = (OwritePosition + hopSize) % bufferSize;
+        //
         //DBG (writePosition);
+        OwritePosition = (OwritePosition + hopSize) % bufferSize;
+        DBG(OwritePosition);
     }
-    //DBG (hopCount);
-    //DBG (writePosition);
-    //DBG ("circbuffersize = " + std::to_string(circBufferSize));
+    
 }
 void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer)
 {
@@ -234,15 +231,11 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < fftSize; ++x)
     {
         //unwrap into output buffer use some modulo stuff
-        OcircBuffer.setSample(channel, ++OwritePosition, fftBuffer[x]);
-        if (OwritePosition >= circBufferSize)//wrong start here tomorrow
-        {
-            OwritePosition = 0;
-        }
-        //increase Output Buffer write position by one hopsize (using modulo indexing)
-        OwritePosition = (OwritePosition + hopSize) % circBufferSize;
+        OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
+        
     }
     
+
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const
