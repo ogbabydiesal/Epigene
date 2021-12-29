@@ -15,8 +15,8 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (640, 300);
-    for (int x = 0; x < 64; x++)
+    setSize (1280, 300);
+    for (int x = 0; x < 256; x++)
     {
         // these define the parameters of our slider object
         midiVolume[x].setSliderStyle (juce::Slider::LinearBarVertical);
@@ -33,7 +33,7 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
 
 void NewProjectAudioProcessorEditor::sliderValueChanged (juce::Slider* slider)
 {
-    for (int x = 0; x < 64; x++)
+    for (int x = 0; x < 256; x++)
     {
         audioProcessor.binAmps[x] = midiVolume[x].getValue();
     }
@@ -65,9 +65,9 @@ void NewProjectAudioProcessorEditor::paint (juce::Graphics& g)
 void NewProjectAudioProcessorEditor::resized()
 {
     
-    for (int x = 0; x < 64; x++)
+    for (int x = 0; x < 256; x++)
     {
-        midiVolume[x].setBounds ((x * 10), 30, 8, getHeight() - 60);
+        midiVolume[x].setBounds ((x * 5), 30, 5, getHeight() - 60);
         // This is generally where you'll want to lay out the positions of any
         // subcomponents in your editor..
     }
