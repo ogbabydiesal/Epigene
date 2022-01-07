@@ -104,6 +104,7 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     OwritePosition = hopSize;
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
+    
 }
 
 void NewProjectAudioProcessor::releaseResources()
