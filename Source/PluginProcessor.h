@@ -23,7 +23,7 @@ public:
     //==============================================================================
     void prepareToPlay (double sampleRate, int samplesPerBlock) override;
     void releaseResources() override;
-
+    
    #ifndef JucePlugin_PreferredChannelConfigurations
     bool isBusesLayoutSupported (const BusesLayout& layouts) const override;
    #endif
@@ -54,7 +54,8 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
     void process (juce::dsp::ProcessContextReplacing<float>context);
     void updateParameters();
-    float binAmps[64];
+    float binAmps[256];
+    int fftSize = 256;
 
 private:
     void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
@@ -69,12 +70,12 @@ private:
     int OreadPosition {0}; //output buffer read position
     juce::dsp::FFT forwardFFT;
     juce::dsp::FFT inverseFFT;
-    int fftSize = 256;
+    
     int hopSize = fftSize / 2;
     int hopCount = 0;
     float chunkOne [256];
     float fftBuffer [512]; //twice fftSize to store mirror image
-    
+    //float binValues [256];
     juce::String fftSizeStr = "";
     juce::dsp::WindowingFunction<float> window;
 

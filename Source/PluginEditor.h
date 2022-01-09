@@ -14,7 +14,7 @@
 //==============================================================================
 /**
 */
-class NewProjectAudioProcessorEditor  : public juce::AudioProcessorEditor, private juce::Slider::Listener
+class NewProjectAudioProcessorEditor  : public juce::AudioProcessorEditor, public juce::Timer
 
 {
 public:
@@ -24,14 +24,31 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-
+    
+    //void sliderValueChanged (juce::Slider* slider) override;
+    void timerCallback() override;
+    void initialize (int size);
+    void addToHistory (const juce::Point<float>& point);
+    void uiToFilter(juce::Point<float> mousePosition);
 private:
-    void sliderValueChanged (juce::Slider* slider) override;
+    //juce::ImageComponent mImageComponent;
+    juce::ImageButton fImageButton; //filterImage button
+    juce::ImageButton pImageButton; //panImage button
+    juce::ImageComponent greenBurst;
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     NewProjectAudioProcessor& audioProcessor;
      //the fftSize
-    juce::Slider midiVolume[64]; // [1]
+    //juce::Slider midiVolume[256]; // [1]
+    
+    std::vector<juce::Point<float>> mouseHistory;
+    int writePointer = 0;
+    int width = 640;
+    //OldMin
+    int widthMin = 0;
+    int NewMax = audioProcessor.fftSize;
+    int NewMin = 0;
+    int NewValue = 0;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessorEditor)
 };
