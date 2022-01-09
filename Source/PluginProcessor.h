@@ -55,6 +55,7 @@ public:
     void process (juce::dsp::ProcessContextReplacing<float>context);
     void updateParameters();
     float binAmps[256];
+    int fftSize = 256;
 
 private:
     void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
@@ -69,7 +70,7 @@ private:
     int OreadPosition {0}; //output buffer read position
     juce::dsp::FFT forwardFFT;
     juce::dsp::FFT inverseFFT;
-    int fftSize = 256;
+    
     int hopSize = fftSize / 2;
     int hopCount = 0;
     float chunkOne [256];

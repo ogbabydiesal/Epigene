@@ -214,7 +214,6 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < fftSize; ++x)
     {
         fftBuffer[x] *= binAmps[x]; //simple spectral filter;
-        //DBG(binAmps[x]);
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
