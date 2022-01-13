@@ -8,9 +8,8 @@
               pluginManufacturerCode="Tmar">
   <MAINGROUP id="IHChz6" name="Epigene">
     <GROUP id="{FE967B61-7FFB-C742-A132-B97EE45A398F}" name="images">
-      <FILE id="oxeYel" name="greenThing.png" compile="0" resource="1" file="../images/PNG/PNG/greenThing.png"/>
-      <FILE id="iCAIYh" name="button.png" compile="0" resource="1" file="../images/PNG/PNG/button.png"
-            xcodeResource="1"/>
+      <FILE id="KGk3kw" name="greenThing.png" compile="0" resource="1" file="images/PNG/PNG/greenThing.png"/>
+      <FILE id="qvF8UA" name="button.png" compile="0" resource="1" file="images/PNG/PNG/button.png"/>
     </GROUP>
     <GROUP id="{619E6FFE-8A47-A4B1-D2EA-F2B261EFDBE9}" name="Source">
       <FILE id="SQU4JY" name="PluginProcessor.cpp" compile="1" resource="0"
