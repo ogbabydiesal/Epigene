@@ -34,41 +34,14 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     greenBurst.setBounds(randomX, randomY, 45 + randomSize, 45 + randomSize);
     addAndMakeVisible(greenBurst);
     fImageButton.setImages(true, true, true, buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0));
-    fImageButton.setSize(35, 35);
+    fImageButton.setSize(65, 65);
     addAndMakeVisible(fImageButton);
     
     //Pan Focus Button
     pImageButton.setImages(true, true, true, buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0));
-    pImageButton.setSize(35, 35);
-    /*
-    //create a lot of sliders
-    for (int x = 0; x < 256; x++)
-    {
-        // these define the parameters of our slider object
-        midiVolume[x].setSliderStyle (juce::Slider::LinearBarVertical);
-        midiVolume[x].setRange (0.0, 1, .01);
-        midiVolume[x].setTextBoxStyle (juce::Slider::NoTextBox, false, 90, 0);
-        //midiVolume[x].setPopupDisplayEnabled (true, false, this);
-        //midiVolume[x].setTextValueSuffix (std::to_string(x) + " Volume");
-        midiVolume[x].setValue(1.0);
-        midiVolume[x].addListener (this);
-        //addAndMakeVisible (&midiVolume[x]);
-    }
-     */
-    
+    pImageButton.setSize(65, 65);
+    addAndMakeVisible(pImageButton);
 }
-
-//slider listener
-/*
-void NewProjectAudioProcessorEditor::sliderValueChanged (juce::Slider* slider)
-{
-    for (int x = 0; x < 256; x++)
-    {
-        audioProcessor.binAmps[x] = midiVolume[x].getValue();
-    }
-}
-
-*/
 NewProjectAudioProcessorEditor::~NewProjectAudioProcessorEditor()
 {
 }
@@ -101,25 +74,34 @@ void NewProjectAudioProcessorEditor::uiToFilter(juce::Point<float> mousePosition
     {
         OldValueY = 320;
     }
+    if (NewValue < 0)
+    {
+        NewValue = 0;
+    }
+    else if (NewValue > NewMax - 1)
+    {
+        NewValue = NewMax -1;
+    }
+    
     float binVal = (OldValueY) / (320);
     
     if (NewValue >= 0 && NewValue < NewMax)
     {
         audioProcessor.binAmps[NewValue] = (1.0 - binVal);
+        
     }
 }
-
 
 //==============================================================================
 
 void NewProjectAudioProcessorEditor::paint (juce::Graphics& g)
 {
     // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (juce::Colours::black);
+    g.fillAll (juce::Colours::transparentBlack);
     //g.setColour (juce::Colours::palegreen);
     g.setColour(juce::Colours::rebeccapurple);
     g.setFont (15.0f);
-    g.drawFittedText ("EPIGENE", 0, 0, getWidth(), 30, juce::Justification::topRight, 1);
+    g.drawFittedText ("EPIGENE_hoho", 0, 0, getWidth(), 50, juce::Justification::topRight, 1);
     
     auto position = getMouseXYRelative();
     
@@ -153,14 +135,7 @@ void NewProjectAudioProcessorEditor::timerCallback()
 
 void NewProjectAudioProcessorEditor::resized()
 {
-    fImageButton.setBounds(10, 10, 5, 5);
-    fImageButton.setBounds(10, 25, 5, 5);
+    fImageButton.setBounds(10, 10, 0, 0);
+    pImageButton.setBounds(20, 45, 0, 0);
     
-    /*
-     for (int x = 0; x < 256; x++)
-    {
-        midiVolume[x].setBounds ((x * 5), 30, 5, getHeight() - 60);
-    }
-     */
-    addAndMakeVisible(pImageButton);
 }

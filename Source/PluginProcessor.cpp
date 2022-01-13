@@ -104,6 +104,10 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     OwritePosition = hopSize;
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
+    std::fill(
+        binAmps + 0, binAmps + fftSize
+      , 1
+    );
     
 }
 
@@ -159,7 +163,8 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
-            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % bufferSize));
+            //multiply output by .5f assuming hopsize is 2
+            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % bufferSize) * .5f);
             OcircBuffer.clear(channel, (OreadPosition + sample) % bufferSize, 1);
             //channelData[sample] = fftBuffer[sample] ;
         }
@@ -171,7 +176,10 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
 {
     // Check to see if main buffer copies to circ buffer without needing to wrap...
     for (int x = 0; x < bufferSize; ++x) {
-        circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
+        //setSample below replaces this
+        //circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
+        circBuffer.setSample(channel, writePosition, channelData[x]);
+        //static_cast<float>(channelData[x]);
         hopCounter(channel, bufferSize, circBufferSize);
         if (++writePosition >= circBufferSize)
         {
@@ -214,6 +222,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < fftSize; ++x)
     {
         fftBuffer[x] *= binAmps[x]; //simple spectral filter;
+        //DBG ("bin is " + std::to_string(x) + " and value is " + std::to_string(binAmps[x]));
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
