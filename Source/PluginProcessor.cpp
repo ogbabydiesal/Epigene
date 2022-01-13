@@ -235,6 +235,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
         //OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
         OcircBuffer.addSample(channel, (OwritePosition + x) % bufferSize, fftBuffer[x]);
     }
+    //DBG(channel);
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const
