@@ -1,8 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<JUCERPROJECT id="t9vzHK" name="specFilter" projectType="audioplug" useAppConfig="0"
-              jucerFormatVersion="1" companyName="Tommy Martinez" addUsingNamespaceToJuceHeader="0">
-  <MAINGROUP id="IHChz6" name="specFilter">
+<JUCERPROJECT id="t9vzHK" name="Epigene" projectType="audioplug" useAppConfig="0"
+              jucerFormatVersion="1" companyName="Tommy Martinez" addUsingNamespaceToJuceHeader="0"
+              pluginFormats="buildAU,buildStandalone,buildUnity,buildVST3"
+              pluginVST3Category="Filter,Fx" pluginRTASCategory="1,8192" pluginAAXCategory="1,8192"
+              companyWebsite="www.thomasjohnmartinez.com" companyEmail="thomasjohnmartinez.com"
+              pluginManufacturerCode="Tmar">
+  <MAINGROUP id="IHChz6" name="Epigene">
+    <GROUP id="{FE967B61-7FFB-C742-A132-B97EE45A398F}" name="images">
+      <FILE id="KGk3kw" name="greenThing.png" compile="0" resource="1" file="images/PNG/PNG/greenThing.png"/>
+      <FILE id="qvF8UA" name="button.png" compile="0" resource="1" file="images/PNG/PNG/button.png"/>
+    </GROUP>
     <GROUP id="{619E6FFE-8A47-A4B1-D2EA-F2B261EFDBE9}" name="Source">
       <FILE id="SQU4JY" name="PluginProcessor.cpp" compile="1" resource="0"
             file="Source/PluginProcessor.cpp"/>
