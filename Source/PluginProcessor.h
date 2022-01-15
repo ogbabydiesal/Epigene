@@ -58,13 +58,14 @@ public:
     int fftSize = 256;
 
 private:
-    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
+    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer);
     void spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer);
     void hopCounter(int channel, int bufferSize, int circBufferSize);
     juce::AudioBuffer<float> circBuffer; //input circular buffer
     juce::AudioBuffer<float> OcircBuffer; //output circular buffer
-    juce::AudioBuffer<float> chunkTwo; //FFT processing container
-    
+    //juce::AudioBuffer<float> chunkTwo; //FFT processing container
+    int circBufferSize;
+    int bufferSize;
     int writePosition {0}; //input buffer write position
     int OwritePosition {0}; //output buffer write position
     int OreadPosition {0}; //output buffer read position
@@ -74,6 +75,7 @@ private:
     int hopSize = fftSize / 2;
     int hopCount = 0;
     float chunkOne [256];
+    float chunkTwo [256];
     float fftBuffer [512]; //twice fftSize to store mirror image
     //float binValues [256];
     juce::String fftSizeStr = "";

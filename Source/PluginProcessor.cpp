@@ -99,16 +99,13 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
-    auto circBufferSize = 1024;
+    circBufferSize = 1024;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
-    chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
+    //chunkTwo.setSize (getTotalNumOutputChannels(), (int)fftSize);
     OwritePosition = hopSize;
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)samplesPerBlock);
-    std::fill(
-        binAmps + 0, binAmps + fftSize
-      , 1
-    );
-    
+    std::fill(binAmps + 0, binAmps + fftSize, 1);
+    bufferSize = samplesPerBlock;
 }
 
 void NewProjectAudioProcessor::releaseResources()
@@ -151,15 +148,12 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 
     for (auto i = totalNumInputChannels; i < totalNumOutputChannels; ++i)
         buffer.clear (i, 0, buffer.getNumSamples());
-    auto bufferSize = buffer.getNumSamples();
-    auto circBufferSize = circBuffer.getNumSamples();
-    auto chunkTwoSize = chunkTwo.getNumSamples();
     
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
         //writes sample blocks into a circular buffer from The Audio Programmer Tutorial 15
-        bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer, chunkTwoSize);
+        bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer);
         
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
@@ -172,14 +166,12 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     }
 }
 
-void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize)
+void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer)
 {
     // Check to see if main buffer copies to circ buffer without needing to wrap...
     for (int x = 0; x < bufferSize; ++x) {
-        //setSample below replaces this
-        //circBuffer.copyFromWithRamp (channel, writePosition, channelData + x, 1, 0.1f, 0.1f);
+        
         circBuffer.setSample(channel, writePosition, channelData[x]);
-        //static_cast<float>(channelData[x]);
         hopCounter(channel, bufferSize, circBufferSize);
         if (++writePosition >= circBufferSize)
         {
