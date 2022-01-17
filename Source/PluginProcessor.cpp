@@ -158,8 +158,8 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         for (int sample = 0; sample < buffer.getNumSamples(); ++sample)
         {
             //multiply output by .5f assuming hopsize is 2
-            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % bufferSize) * .5f);
-            OcircBuffer.clear(channel, (OreadPosition + sample) % bufferSize, 1);
+            channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % bufferSize) * .2f);
+            OcircBuffer.setSample(channel, (OreadPosition + sample) % bufferSize, 0.0f);
             //channelData[sample] = fftBuffer[sample] ;
         }
         OreadPosition = (OreadPosition + bufferSize) % bufferSize;
@@ -196,36 +196,87 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     //get most recent fftsize of samples using modulo indexing and store them in a buffer
     for (int x = 0; x < fftSize; x++)
     {
-        chunkOne[x] = circBuffer.getSample(channel, (((writePosition + x - fftSize) + circBufferSize) % circBufferSize));
+        if (channel == 0 )
+        {
+            chunkOne[x] = circBuffer.getSample(channel, (((writePosition + x - fftSize) + circBufferSize) % circBufferSize));
+        }
+        else
+        {
+            chunkTwo[x] = circBuffer.getSample(channel, (((writePosition + x - fftSize) + circBufferSize) % circBufferSize));
+        }
     }
     //window the buffer
-    window.multiplyWithWindowingTable(chunkOne, fftSize);
+    if (channel == 0)
+    {
+        window.multiplyWithWindowingTable(chunkOne, fftSize);
+    }
+    
+    else
+    {
+        window.multiplyWithWindowingTable(chunkTwo, fftSize);
+    }
     
     //store samples in a padded buffer before we take the fft
     for (int x = 0; x < fftSize; ++x)
     {
         //fftBuffer is 2x the fftSize, so we really only fill half the fftBuffer with this for-loop
-        fftBuffer[x] = chunkOne[x];
+        if (channel == 0)
+        {
+            fftBuffer1[x] = chunkOne[x];
+        }
+        else
+        {
+            fftBuffer2[x] = chunkTwo[x];
+        }
+        
     }
-    //compute the fft of the time doamain signals and store in that same buffer
-    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    if (channel == 0)
+    {
+        //compute the fft of the time doamain signals and store in that same buffer
+        forwardFFT.performRealOnlyForwardTransform(fftBuffer1, true);
+    }
     
+    else
+    {
+        forwardFFT.performRealOnlyForwardTransform(fftBuffer2, true);
+    }
     //do processing in the frequency domain here
     for (int x = 0; x < fftSize; ++x)
     {
-        fftBuffer[x] *= binAmps[x]; //simple spectral filter;
-        //DBG ("bin is " + std::to_string(x) + " and value is " + std::to_string(binAmps[x]));
+        if (channel == 0)
+        {
+            fftBuffer1[x] *= binAmps[x]; //simple spectral filter;
+        }
+        else
+        {
+            fftBuffer2[x] *= binAmps[x]; //simple spectral filter;
+        }
+        
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
-    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    if (channel == 0)
+    {
+        inverseFFT.performRealOnlyInverseTransform(fftBuffer1);
+    }
+    else
+    {
+        inverseFFT.performRealOnlyInverseTransform(fftBuffer2);
+    }
     
     //unwrap and ADD this fftSize of samples into an output buffer
     for (int x = 0; x < fftSize; ++x)
     {
         //unwrap into output buffer use some modulo stuff
         //OcircBuffer.addSample(channel, (OwritePosition + x + hopSize) % bufferSize, fftBuffer[x]);
-        OcircBuffer.addSample(channel, (OwritePosition + x) % bufferSize, fftBuffer[x]);
+        if (channel == 0)
+        {
+            OcircBuffer.addSample(channel, (OwritePosition + x) % bufferSize, fftBuffer1[x]);
+        }
+       else
+       {
+           OcircBuffer.addSample(channel, (OwritePosition + x) % bufferSize, fftBuffer2[x]);
+       }
     }
     //DBG(channel);
 }

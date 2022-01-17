@@ -76,7 +76,8 @@ private:
     int hopCount = 0;
     float chunkOne [256];
     float chunkTwo [256];
-    float fftBuffer [512]; //twice fftSize to store mirror image
+    float fftBuffer1 [512]; //twice fftSize to store mirror image
+    float fftBuffer2 [512];
     //float binValues [256];
     juce::String fftSizeStr = "";
     juce::dsp::WindowingFunction<float> window;
