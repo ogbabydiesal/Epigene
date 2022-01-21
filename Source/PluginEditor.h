@@ -47,6 +47,7 @@ private:
     //OldMin
     int widthMin = 0;
     int NewMax = audioProcessor.fftSize;
+    //int NewMax = 256;
     int NewMin = 0;
     int NewValue = 0;
 

@@ -101,7 +101,7 @@ void NewProjectAudioProcessorEditor::paint (juce::Graphics& g)
     //g.setColour (juce::Colours::palegreen);
     g.setColour(juce::Colours::rebeccapurple);
     g.setFont (15.0f);
-    g.drawFittedText ("EPIGENE_hoho", 0, 0, getWidth(), 50, juce::Justification::topRight, 1);
+    g.drawFittedText ("EPIGENee", 0, 0, getWidth(), 50, juce::Justification::topRight, 1);
     
     auto position = getMouseXYRelative();
     
