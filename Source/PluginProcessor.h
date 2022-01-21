@@ -58,7 +58,7 @@ public:
     int fftSize = 256;
 
 private:
-    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int x);
+    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer);
     void spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer);
     void hopCounter(int channel, int bufferSize, int circBufferSize);
     juce::AudioBuffer<float> circBuffer; //input circular buffer

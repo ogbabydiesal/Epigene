@@ -153,29 +153,41 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-        //writes sample blocks into a circular buffer from The Audio Programmer Tutorial 15
         
-        
+        bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer);
         
         for (int sample = 0; sample < bufferSize; ++sample)
         {
-            bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer, sample);
             channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % circBufferSize) * .5f);
             OcircBuffer.clear(channel, (OreadPosition + sample) % circBufferSize, 1);
         }
         OreadPosition = (OreadPosition + bufferSize) % circBufferSize;
-        
     }
 }
 
-void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int x)
+void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer)
 {
+    /*
+    if (circBufferSize - writePosition >= fftSize)
+    {
+        circBuffer.copyFrom(channel, writePosition, channelData, bufferSize);
+    }
+    else
+    {
+        samplesToEnd = circBufferSize - writePosition;
+        samplesatBeg = bufferSize - samplesToEnd;
+        circBuffer.copyFrom(channel, writePosition, channelData, samplesToEnd);
+        circBuffer.copyFrom(channel, 0, channelData + samplesToEnd, samplesatBeg);
+    }
+     
+    writePosition = (writePosition + bufferSize) % circBufferSize;
+    //what to do about hopCounter
+    for (int x = 0; x < bufferSize; x++)
+    {
+        hopCounter(channel, bufferSize, circBufferSize);
+    }
+    */
     
-    circBuffer.copyFrom(channel, writePosition, channelData + x, 1);
-    writePosition = (writePosition + 1) % circBufferSize;
-    hopCounter(channel, bufferSize, circBufferSize);
-    
-        
     
 }
 
@@ -233,7 +245,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     */
     
     
-    if ( circBufferSize - OwritePosition > fftSize)
+    if ( circBufferSize - OwritePosition >= fftSize)
     {
         OcircBuffer.addFrom(channel, OwritePosition, fftBuffer, fftSize);
     }
