@@ -102,7 +102,7 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     auto circBufferSize = 4196;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
-    OwritePosition = hopSize;
+    OwritePosition = hopSize*2;
     //testRead = 0; //test only
     std::fill(binAmps + 0, binAmps + fftSize, 1);
     
@@ -153,20 +153,31 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
-        
         bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer);
-        
         for (int sample = 0; sample < bufferSize; ++sample)
         {
             channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % circBufferSize) * .5f);
-            OcircBuffer.clear(channel, (OreadPosition + sample) % circBufferSize, 1);
+            OcircBuffer.setSample(channel, (OreadPosition + sample) % circBufferSize, 0.0f);
+            
+            
         }
         OreadPosition = (OreadPosition + bufferSize) % circBufferSize;
+        
     }
 }
 
 void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer)
 {
+    
+    for (int x = 0; x < bufferSize; x ++)
+    {
+        circBuffer.copyFrom(channel, writePosition, channelData + x, 1);
+        //DBG(circBuffer.getSample(channel, writePosition));
+        writePosition = (writePosition + 1) % circBufferSize;
+        hopCounter(channel, bufferSize, circBufferSize);
+        
+    }
+    //writePosition = (writePosition + bufferSize) % circBufferSize;
     /*
     if (circBufferSize - writePosition >= fftSize)
     {
@@ -195,12 +206,14 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
 {
     //DBG(hopCount);
     if(++hopCount >= hopSize)
+        
     {
-        hopCount = 0;
+        
         //start the spectral processing
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
         //after spectral processing increase output buffer write pointer one hop-size
         OwritePosition = (OwritePosition + hopSize) % circBufferSize;
+        hopCount = 0;
     }
 }
 void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer)
@@ -208,43 +221,41 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     //get most recent fftsize of samples using modulo indexing and store them in a buffer
     for (int x = 0; x < fftSize; x++)
     {
-        chunkOne[x] = circBuffer.getSample(channel, (writePosition + circBufferSize + x - fftSize) % circBufferSize);
-        //DBG(chunkOne[x]);
+       
+        chunkOne[x] = circBuffer.getSample(channel, (writePosition + x - fftSize + circBufferSize) % circBufferSize);
     }
     //window the buffer
-    window.multiplyWithWindowingTable(chunkOne, fftSize);
+    //window.multiplyWithWindowingTable(chunkOne, fftSize);
     
     for (int x = 0; x < fftSize; ++x)
     {
         //fftBuffer is 2x the fftSize, so we really only fill half the fftBuffer with this for-loop
         fftBuffer[x] = chunkOne[x];
-        //DBG(chunkOne[x]);
+        
     }
     //compute the fft of the time domain signals and store in that same buffer
-    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    //forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
     
     //do processing in the frequency domain here
     
     for (int x = 0; x < fftSize; ++x)
     {
-        fftBuffer[x] *= binAmps[x]; //simple spectral filter;
+        //fftBuffer[x] *= binAmps[x]; //simple spectral filter;
         //DBG ("bin is " + std::to_string(x) + " and value is " + std::to_string(binAmps[x]));
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
-    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    //inverseFFT.performRealOnlyInverseTransform(fftBuffer);
     
     //unwrap and ADD this fftSize of samples into an output buffer
-    /*
+    
     for (int x = 0; x < fftSize; ++x)
     {
         //unwrap into output buffer use some modulo stuff
         
         OcircBuffer.addSample(channel, (OwritePosition + x) % circBufferSize, fftBuffer[x]);
     }
-    */
-    
-    
+    /*
     if ( circBufferSize - OwritePosition >= fftSize)
     {
         OcircBuffer.addFrom(channel, OwritePosition, fftBuffer, fftSize);
@@ -256,7 +267,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
         OcircBuffer.addFrom(channel, OwritePosition, fftBuffer, samplesToEnd);
         OcircBuffer.addFrom(channel, 0, fftBuffer + samplesToEnd, samplesatBeg);
     }
-    //DBG(OwritePosition);
+     */
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const
