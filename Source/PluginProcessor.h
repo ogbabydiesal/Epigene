@@ -58,16 +58,16 @@ public:
     int fftSize = 256;
 
 private:
-    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer, int chunkTwoSize);
+    void bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer);
     void spectralShit(int channel, int bufferSize, int circBufferSize, int OwritePosition, juce::AudioBuffer<float>& OcircBuffer);
     void hopCounter(int channel, int bufferSize, int circBufferSize);
     juce::AudioBuffer<float> circBuffer; //input circular buffer
     juce::AudioBuffer<float> OcircBuffer; //output circular buffer
-    juce::AudioBuffer<float> chunkTwo; //FFT processing container
     
-    int writePosition {0}; //input buffer write position
-    int OwritePosition {0}; //output buffer write position
-    int OreadPosition {0}; //output buffer read position
+    int writePosition = 0; //input buffer write position
+    int OwritePosition; //output buffer write position
+    int OreadPosition = 0; //output buffer read position
+    int testRead = 0; //test purposes only
     juce::dsp::FFT forwardFFT;
     juce::dsp::FFT inverseFFT;
     
@@ -78,6 +78,8 @@ private:
     //float binValues [256];
     juce::String fftSizeStr = "";
     juce::dsp::WindowingFunction<float> window;
+    int samplesToEnd = 0;
+    int samplesatBeg = 0;
 
     //==============================================================================
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (NewProjectAudioProcessor)
