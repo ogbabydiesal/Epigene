@@ -150,7 +150,7 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         buffer.clear (i, 0, buffer.getNumSamples());
     auto bufferSize = buffer.getNumSamples();
     auto circBufferSize = circBuffer.getNumSamples();
-    for (int channel = 0; channel < totalNumInputChannels; ++channel)
+    for (int channel = 0; channel < 1; ++channel)
     {
         auto* channelData = buffer.getWritePointer (channel);
         bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer);
@@ -175,7 +175,6 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
         //DBG(circBuffer.getSample(channel, writePosition));
         writePosition = (writePosition + 1) % circBufferSize;
         hopCounter(channel, bufferSize, circBufferSize);
-        
     }
     //writePosition = (writePosition + bufferSize) % circBufferSize;
     /*
@@ -208,7 +207,6 @@ void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circB
     if(++hopCount >= hopSize)
         
     {
-        
         //start the spectral processing
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
         //after spectral processing increase output buffer write pointer one hop-size
@@ -225,7 +223,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
         chunkOne[x] = circBuffer.getSample(channel, (writePosition + x - fftSize + circBufferSize) % circBufferSize);
     }
     //window the buffer
-    //window.multiplyWithWindowingTable(chunkOne, fftSize);
+    window.multiplyWithWindowingTable(chunkOne, fftSize);
     
     for (int x = 0; x < fftSize; ++x)
     {
@@ -234,18 +232,18 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
         
     }
     //compute the fft of the time domain signals and store in that same buffer
-    //forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
     
     //do processing in the frequency domain here
     
     for (int x = 0; x < fftSize; ++x)
     {
-        //fftBuffer[x] *= binAmps[x]; //simple spectral filter;
+        fftBuffer[x] *= binAmps[x]; //simple spectral filter;
         //DBG ("bin is " + std::to_string(x) + " and value is " + std::to_string(binAmps[x]));
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
-    //inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
     
     //unwrap and ADD this fftSize of samples into an output buffer
     
