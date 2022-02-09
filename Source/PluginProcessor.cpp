@@ -99,13 +99,14 @@ void NewProjectAudioProcessor::prepareToPlay (double sampleRate, int samplesPerB
     spec.sampleRate = sampleRate;
     spec.maximumBlockSize = samplesPerBlock;
     spec.numChannels = getTotalNumOutputChannels();
-    auto circBufferSize = 4196;
+    //buffer size for input and output buffers
+    auto circBufferSize = 4096;
     circBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
     OcircBuffer.setSize (getTotalNumOutputChannels(), (int)circBufferSize);
-    OwritePosition = hopSize*2;
-    //testRead = 0; //test only
+    //keep the write position a hop size ahead of the read position
+    OwritePosition = hopSize * 2;
+    //set all frequency bins to 1.0
     std::fill(binAmps + 0, binAmps + fftSize, 1);
-    
 }
 
 void NewProjectAudioProcessor::releaseResources()
@@ -150,30 +151,44 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         buffer.clear (i, 0, buffer.getNumSamples());
     auto bufferSize = buffer.getNumSamples();
     auto circBufferSize = circBuffer.getNumSamples();
-    for (int channel = 0; channel < 1; ++channel)
+    //executes once per channel
+    for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
+        //pointer to the most current buffer
         auto* channelData = buffer.getWritePointer (channel);
+        //write samples into the processing algorithm
         bufferFiller(channel, bufferSize, circBufferSize, channelData, hopSize, buffer);
+        //output stuff
         for (int sample = 0; sample < bufferSize; ++sample)
         {
+            //write samples to dac from output buffer and scale signal down by hopsize/fftsize (because we are adding into the buffer not merely replacing its contents)
             channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % circBufferSize) * .5f);
+            //clear samples that we have *added (from the overlap) to the output buffer
             OcircBuffer.setSample(channel, (OreadPosition + sample) % circBufferSize, 0.0f);
-            
-            
         }
-        OreadPosition = (OreadPosition + bufferSize) % circBufferSize;
-        
     }
+    //update readPosition outside of the channel loop
+    OreadPosition = (OreadPosition + bufferSize) % circBufferSize;
 }
 
 void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer)
 {
+    //if we're in channel 2, reset the writeposition one buffersize because we incremented it by that amount in channel 1
+    if (channel == 1)
+    {
+        writePosition = (writePosition - bufferSize + circBufferSize) % circBufferSize;
+        OwritePosition= (OwritePosition - bufferSize + circBufferSize) % circBufferSize;
+    }
     
     for (int x = 0; x < bufferSize; x ++)
     {
+        
+        //write most recent block of samples into our input circular buffer starting at the write position
         circBuffer.copyFrom(channel, writePosition, channelData + x, 1);
         //DBG(circBuffer.getSample(channel, writePosition));
+        //increment our
         writePosition = (writePosition + 1) % circBufferSize;
+        
         hopCounter(channel, bufferSize, circBufferSize);
     }
     //writePosition = (writePosition + bufferSize) % circBufferSize;
@@ -189,7 +204,6 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
         circBuffer.copyFrom(channel, writePosition, channelData, samplesToEnd);
         circBuffer.copyFrom(channel, 0, channelData + samplesToEnd, samplesatBeg);
     }
-     
     writePosition = (writePosition + bufferSize) % circBufferSize;
     //what to do about hopCounter
     for (int x = 0; x < bufferSize; x++)
@@ -197,20 +211,23 @@ void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int cir
         hopCounter(channel, bufferSize, circBufferSize);
     }
     */
-    
-    
 }
 
 void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circBufferSize)
 {
     //DBG(hopCount);
     if(++hopCount >= hopSize)
+        //should this be hopSize - 1?
         
     {
         //start the spectral processing
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
         //after spectral processing increase output buffer write pointer one hop-size
+            //only increment the OwritePosition a hopSize if we have written both channels
+        
         OwritePosition = (OwritePosition + hopSize) % circBufferSize;
+        
+        
         hopCount = 0;
     }
 }
