@@ -1,4 +1,4 @@
-# spectral-filter
+# Spectral Filter
 A Spectral Filter audio plugin built with Juce.
 
 Description
