@@ -245,22 +245,24 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     for (int x = 0; x < fftSize; ++x)
     {
         //fftBuffer is 2x the fftSize, so we really only fill half the fftBuffer with this for-loop
-        fftBuffer[x] = chunkOne[x];
+        fftin[x] = chunkOne[x];
         
     }
     //compute the fft of the time domain signals and store in that same buffer
-    forwardFFT.performRealOnlyForwardTransform(fftBuffer, true);
+    forwardFFT.perform(fftin, holdfft, false);
     
     //do processing in the frequency domain here
     
     for (int x = 0; x < fftSize; ++x)
     {
-        fftBuffer[x] *= binAmps[x]; //simple spectral filter;
-        //DBG ("bin is " + std::to_string(x) + " and value is " + std::to_string(binAmps[x]));
+        
+        holdfft[x] *= binAmps[x]; //simple spectral filter;
+        //holdfft[x].imag() *= binAmps[x];
+        
     }
     //compute the ifft on that buffer
     //first half of the inverse fft is our reconstituted values
-    inverseFFT.performRealOnlyInverseTransform(fftBuffer);
+    inverseFFT.perform(holdfft, fftout, true);
     
     //unwrap and ADD this fftSize of samples into an output buffer
     
@@ -268,7 +270,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     {
         //unwrap into output buffer use some modulo stuff
         
-        OcircBuffer.addSample(channel, (OwritePosition + x) % circBufferSize, fftBuffer[x]);
+        OcircBuffer.addSample(channel, (OwritePosition + x) % circBufferSize, fftout[x].real());
     }
     /*
     if ( circBufferSize - OwritePosition >= fftSize)
