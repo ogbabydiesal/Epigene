@@ -30,6 +30,11 @@ public:
     void initialize (int size);
     void addToHistory (const juce::Point<float>& point);
     void uiToFilter(juce::Point<float> mousePosition);
+    void MouseDown(const juce::MouseEvent &event);
+    void MouseEnter(const juce::MouseEvent &event);
+    void MouseExit(const juce::MouseEvent &event);
+    
+    bool isEntered {false};
 private:
     //juce::ImageComponent mImageComponent;
     juce::ImageButton fImageButton; //filterImage button
@@ -38,8 +43,7 @@ private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     NewProjectAudioProcessor& audioProcessor;
-     //the fftSize
-    //juce::Slider midiVolume[256]; // [1]
+    
     
     std::vector<juce::Point<float>> mouseHistory;
     int writePointer = 0;

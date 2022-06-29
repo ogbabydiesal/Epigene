@@ -15,7 +15,7 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
-    setSize (640, 320);
+    setSize (552, 320);
     juce::Timer::startTimerHz(60.0f);
     initialize(10);
     //reference to normal button image
@@ -32,7 +32,9 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     greenBurst.toFront(true);
     //greenBurst.setSize(45 + randomSize, 45 + randomSize);
     greenBurst.setBounds(randomX, randomY, 45 + randomSize, 45 + randomSize);
-    addAndMakeVisible(greenBurst);
+    greenBurst.toBack();
+    //addAndMakeVisible(greenBurst);
+    
     fImageButton.setImages(true, true, true, buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0));
     fImageButton.setSize(65, 65);
     addAndMakeVisible(fImageButton);
@@ -96,13 +98,15 @@ void NewProjectAudioProcessorEditor::uiToFilter(juce::Point<float> mousePosition
 
 void NewProjectAudioProcessorEditor::paint (juce::Graphics& g)
 {
-    // (Our component is opaque, so we must completely fill the background with a solid colour)
-    g.fillAll (juce::Colours::transparentBlack);
-    //g.setColour (juce::Colours::palegreen);
+    //g.fillAll (juce::Colours::grey);
+    
+    g.setColour(juce::Colours::black);
+    
+    g.fillRect(20, 100, 512, 200);
+    
     g.setColour(juce::Colours::rebeccapurple);
     g.setFont (15.0f);
-    g.drawFittedText ("haha", 0, 0, getWidth(), 50, juce::Justification::topRight, 1);
-    
+    g.drawFittedText ("hehe", 0, 0, getWidth(), 50, juce::Justification::topRight, 1);
     auto position = getMouseXYRelative();
     
     //change mouse position int to float
