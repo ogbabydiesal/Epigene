@@ -255,10 +255,7 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     
     for (int x = 0; x < fftSize; ++x)
     {
-        
         holdfft[x] *= binAmps[x]; //simple spectral filter;
-        holdfft[x+fftSize] *= binAmps[x];
-        //holdfft[x].imag() *= binAmps[x];
         
     }
     //compute the ifft on that buffer

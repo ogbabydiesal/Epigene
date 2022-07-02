@@ -34,7 +34,6 @@ NewProjectAudioProcessorEditor::NewProjectAudioProcessorEditor (NewProjectAudioP
     greenBurst.setBounds(randomX, randomY, 45 + randomSize, 45 + randomSize);
     greenBurst.toBack();
     //addAndMakeVisible(greenBurst);
-    
     fImageButton.setImages(true, true, true, buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0), buttonImage, 1, juce::Colour::fromFloatRGBA(0,0,0,0));
     fImageButton.setSize(65, 65);
     addAndMakeVisible(fImageButton);
@@ -49,6 +48,18 @@ NewProjectAudioProcessorEditor::~NewProjectAudioProcessorEditor()
 }
 
 //================ DRAW UI & UPDATE FILTER VALUES ===============================
+void NewProjectAudioProcessorEditor::MouseEnter(const juce::MouseEvent &event) {
+    isEntered = true;
+}
+
+void NewProjectAudioProcessorEditor::MouseExit(const juce::MouseEvent &event) {
+    
+}
+
+void NewProjectAudioProcessorEditor::MouseDown(const juce::MouseEvent &event) {
+    
+}
+
 void NewProjectAudioProcessorEditor::initialize (int size)
 {
     mouseHistory.resize(size);
