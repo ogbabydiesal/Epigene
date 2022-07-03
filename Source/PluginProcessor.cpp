@@ -163,7 +163,7 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
         {
             //write samples to dac from output buffer and scale signal down by hopsize/fftsize (because we are adding into the buffer not merely replacing its contents)
             channelData[sample] = (OcircBuffer.getSample(channel, (OreadPosition + sample) % circBufferSize) * .5f);
-            //clear samples that we have *added (from the overlap) to the output buffer
+            //clear samples that we have added (from the overlap) to the output buffer
             OcircBuffer.setSample(channel, (OreadPosition + sample) % circBufferSize, 0.0f);
         }
     }
@@ -174,60 +174,31 @@ void NewProjectAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
 void NewProjectAudioProcessor::bufferFiller(int channel, int bufferSize, int circBufferSize, float* channelData, int hopSize, juce::AudioBuffer<float>& buffer)
 {
     //if we're in channel 2, reset the writeposition one buffersize because we incremented it by that amount in channel 1
-    if (channel == 1)
+    if (channel > 0)
     {
         writePosition = (writePosition - bufferSize + circBufferSize) % circBufferSize;
         OwritePosition= (OwritePosition - bufferSize + circBufferSize) % circBufferSize;
     }
-    
     for (int x = 0; x < bufferSize; x ++)
     {
-        
         //write most recent block of samples into our input circular buffer starting at the write position
         circBuffer.copyFrom(channel, writePosition, channelData + x, 1);
-        //DBG(circBuffer.getSample(channel, writePosition));
-        //increment our
+        //increment our writePosition
         writePosition = (writePosition + 1) % circBufferSize;
-        
         hopCounter(channel, bufferSize, circBufferSize);
     }
-    //writePosition = (writePosition + bufferSize) % circBufferSize;
-    /*
-    if (circBufferSize - writePosition >= fftSize)
-    {
-        circBuffer.copyFrom(channel, writePosition, channelData, bufferSize);
-    }
-    else
-    {
-        samplesToEnd = circBufferSize - writePosition;
-        samplesatBeg = bufferSize - samplesToEnd;
-        circBuffer.copyFrom(channel, writePosition, channelData, samplesToEnd);
-        circBuffer.copyFrom(channel, 0, channelData + samplesToEnd, samplesatBeg);
-    }
-    writePosition = (writePosition + bufferSize) % circBufferSize;
-    //what to do about hopCounter
-    for (int x = 0; x < bufferSize; x++)
-    {
-        hopCounter(channel, bufferSize, circBufferSize);
-    }
-    */
 }
 
 void NewProjectAudioProcessor::hopCounter(int channel, int bufferSize, int circBufferSize)
 {
-    //DBG(hopCount);
     if(++hopCount >= hopSize)
         //should this be hopSize - 1?
-        
     {
         //start the spectral processing
         spectralShit(channel, bufferSize, circBufferSize, OwritePosition, OcircBuffer);
         //after spectral processing increase output buffer write pointer one hop-size
             //only increment the OwritePosition a hopSize if we have written both channels
-        
         OwritePosition = (OwritePosition + hopSize) % circBufferSize;
-        
-        
         hopCount = 0;
     }
 }
@@ -236,53 +207,30 @@ void NewProjectAudioProcessor::spectralShit(int channel, int bufferSize, int cir
     //get most recent fftsize of samples using modulo indexing and store them in a buffer
     for (int x = 0; x < fftSize; x++)
     {
-       
         chunkOne[x] = circBuffer.getSample(channel, (writePosition + x - fftSize + circBufferSize) % circBufferSize);
     }
     //window the buffer
     window.multiplyWithWindowingTable(chunkOne, fftSize);
-    
     for (int x = 0; x < fftSize; ++x)
     {
         //fftBuffer is 2x the fftSize, so we really only fill half the fftBuffer with this for-loop
         fftin[x] = chunkOne[x];
-        
+
     }
     //compute the fft of the time domain signals and store in that same buffer
     forwardFFT.perform(fftin, holdfft, false);
-    
     //do processing in the frequency domain here
-    
     for (int x = 0; x < fftSize; ++x)
     {
         holdfft[x] *= binAmps[x]; //simple spectral filter;
-        
     }
     //compute the ifft on that buffer
-    //first half of the inverse fft is our reconstituted values
     inverseFFT.perform(holdfft, fftout, true);
-    
-    //unwrap and ADD this fftSize of samples into an output buffer
-    
     for (int x = 0; x < fftSize; ++x)
     {
-        //unwrap into output buffer use some modulo stuff
-        
+        //unwrap and ADD this fftSize of samples into an output buffer
         OcircBuffer.addSample(channel, (OwritePosition + x) % circBufferSize, fftout[x].real());
     }
-    /*
-    if ( circBufferSize - OwritePosition >= fftSize)
-    {
-        OcircBuffer.addFrom(channel, OwritePosition, fftBuffer, fftSize);
-    }
-    else
-    {
-        samplesToEnd = circBufferSize - OwritePosition;
-        samplesatBeg = fftSize - samplesToEnd;
-        OcircBuffer.addFrom(channel, OwritePosition, fftBuffer, samplesToEnd);
-        OcircBuffer.addFrom(channel, 0, fftBuffer + samplesToEnd, samplesatBeg);
-    }
-     */
 }
 //==============================================================================
 bool NewProjectAudioProcessor::hasEditor() const
