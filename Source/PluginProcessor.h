@@ -71,6 +71,10 @@ private:
     juce::dsp::FFT forwardFFT;
     juce::dsp::FFT inverseFFT;
     
+    juce::dsp::Complex<float> fftin[512];
+    juce::dsp::Complex<float> fftout[512];
+    juce::dsp::Complex<float> holdfft[512];
+    
     int hopSize = fftSize / 2;
     int hopCount = 0;
     float chunkOne [256];
