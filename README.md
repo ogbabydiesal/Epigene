@@ -1,6 +1,10 @@
 # Epigene
 ## A Spectral Filter VST built with Juce.
 
+## Download
+
+You will find the built VST in the Plugin folder
+
 ### Description
 
 Epigene is an FFT based audio filtering effect. The plugin allows for a bin-wise attenuation of spectra. It uses the overlap-add processing technique translated from Bela Online Course Lecture 18 taught by Dr. Andrew McPherson at The Queen Mary University of London. You can find the original lecture notes and video here, which includes an expert explanation on how the time to frequency domain, and inverse algorithm works: https://github.com/BelaPlatform/bela-online-course/tree/master/lectures/lecture-18
